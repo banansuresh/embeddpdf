@@ -1,14 +1,10 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.forms import inlineformset_factory
-from django.contrib.auth.forms import UserCreationForm
+from django.core.files.storage import FileSystemStorage
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-# Create your views here.
-from .models import *
 from .forms import CreateUserForm
 
 
@@ -57,14 +53,13 @@ def logoutUser(request):
 
 @login_required(login_url='login')
 def home(request):
-    orders = Order.objects.all()
-    customers = Customer.objects.all()
-
-    total_customers = customers.count()
-
-    total_orders = orders.count()
-    delivered = orders.filter(status='Delivered').count()
-    pending = orders.filter(status='Pending').count()
-
-    return render(request, 'webapp/dashboard.html')
+    if request.method == 'POST' and request.FILES.get('myfile', False):
+        myfile = request.FILES['myfile']
+        fs = FileSystemStorage()
+        filename = fs.save(myfile.name, myfile)
+        uploaded_file_url = fs.url(filename)
+        return render(request, 'webapp/upload.html', {
+            'uploaded_file_url': uploaded_file_url
+        })
+    return render(request, 'webapp/upload.html')
 
